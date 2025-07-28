@@ -1,0 +1,23 @@
+- name: Instalar dependencias base
+  apt:
+    name:
+      - build-essential
+      - zlib1g-dev
+      - git
+      - coreutils
+      - libffi-dev
+      - libedit-dev
+      - libyaml-dev
+      - unzip
+      - curl
+      - sudo
+      - ruby-dev
+      - default-libmysqlclient-dev #a ver si este anda en debian aws
+     # - libmysqlclient-dev
+    update_cache: yes
+
+- name: Crear usuario redmine
+  user:
+    name: "{{ redmine_user }}"
+    shell: /bin/bash
+    create_home: yes

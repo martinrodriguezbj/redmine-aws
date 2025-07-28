@@ -1,0 +1,59 @@
+# Usuarios y rutas
+redmine_user: redmine
+redmine_group: redmine
+vagrant_user: vagrant
+vagrant_home: /home/vagrant
+redmine_version: 6.0.5
+redmine_root: /opt/redmine
+
+# Base de datos
+mysql_root_password: "rootpass123"
+
+mysql_user: "redmine"
+mysql_password: "redmine123"
+mysql_server: "terraform-20250728215504682800000003.c4j0ew28ezij.us-east-1.rds.amazonaws.com"
+
+#mysql_server: "localhost"
+
+mysql_databases:
+  - name: redmine
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+
+mysql_users:
+  - name: redmine
+    host: localhost
+    password: redmine123
+    priv: "redmine.*:ALL"
+
+# asdf
+asdf_user: root
+asdf_group: redmine
+asdf_dir: /home/redmine/.asdf
+asdf_plugins:
+  - name: ruby
+    versions: ["3.2.0"]
+    global: "3.2.0"
+asdf_legacy_version_file: "yes"
+
+# geerlingguy.nginx
+
+nginx_remove_default_vhost: true
+
+nginx_vhosts:
+  - listen: "80"
+    server_name: "mikroways.redmine www.mikroways.redmine"
+    root: "/opt/redmine/public"
+    index: "index.html index.htm"
+    extra_parameters: |
+      location /assets/ {
+          expires max;
+          access_log off;
+      }
+      location / {
+          proxy_pass http://localhost:3001;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+      }

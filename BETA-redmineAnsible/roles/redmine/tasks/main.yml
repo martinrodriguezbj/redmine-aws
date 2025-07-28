@@ -1,0 +1,94 @@
+#descarga de Redmine
+
+- name: Descargar Redmine
+  unarchive:
+    src: "https://www.redmine.org/releases/redmine-{{ redmine_version }}.zip"
+    dest: /opt
+    remote_src: yes
+    creates: "{{ redmine_root }}"
+
+- name: Renombrar redmine descargado
+  command: mv /opt/redmine-{{ redmine_version }} {{ redmine_root }}
+  args:
+    creates: "{{ redmine_root }}"
+
+- name: Cambiar permisos del redmine_root
+  file:
+    path: "{{ redmine_root }}"
+    owner: "{{ redmine_user }}"
+    group: "{{ redmine_group }}"
+    recurse: yes
+
+# Configuracion Redmine
+
+- name: Añadir Puma al Gemfile.local
+  copy:
+    dest: "{{ redmine_root }}/Gemfile.local"
+    content: "gem 'puma'\n"
+    owner: "{{ redmine_user }}"
+    group: "{{ redmine_group }}"
+    mode: '0644'
+
+
+- name: Generar archivo database.yml
+  template:
+    src: database.yml.j2
+    dest: "{{ redmine_root }}/config/database.yml"
+    owner: "{{ redmine_user }}"
+    group: "{{ redmine_group }}"
+    mode: '0640'
+
+#quizas sea mala practica agrupar tanto, pero sino tenia problemas..
+- name: Instalar dependencias y configurar Redmine
+  become: true
+  become_user: "{{ redmine_user }}"
+  shell: |
+    /bin/bash -lc '
+      # Configurar bundle
+      bundle config set --local without "development test"
+      bundle install
+
+      # Generar secret token
+      bundle exec rake generate_secret_token
+
+      # Ejecutar migraciones
+      bundle exec rake db:migrate RAILS_ENV=production
+
+      # Cargar datos por defecto
+      REDMINE_LANG=es bundle exec rake redmine:load_default_data RAILS_ENV=production
+    '
+  args:
+    chdir: "{{ redmine_root }}"
+
+
+- name: Quitar permisos de ejecución en archivos de redmine
+  shell: |
+    find files log tmp public/assets -type f -exec chmod -x {} +
+  args:
+    chdir: "{{ redmine_root }}"
+
+#Configuracion Redmine systemd
+
+- name: Establecer config.public_file_server.enabled en false dentro de production.rb
+  replace:
+    path: "{{ redmine_root }}/config/environments/production.rb"
+    regexp: '^\s*#?\s*config\.public_file_server\.enabled\s*=.*'
+    replace: '  config.public_file_server.enabled = false'
+
+- name: Instalar servicio systemd redmine
+  template:
+    src: redmine.service.j2
+    dest: /etc/systemd/system/redmine.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Recargar systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Habilitar y arrancar el servicio redmine
+  ansible.builtin.systemd:
+    name: redmine.service
+    enabled: yes
+    state: started
