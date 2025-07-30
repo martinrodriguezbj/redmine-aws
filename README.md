@@ -1,54 +1,77 @@
-Cambios conceptuales Parte 1→ Parte 2
+# 🚀 Despliegue Automatizado de Redmine: De Local a la Nube AWS
 
-Parte 1:
--Todo en una VM Vagrant Local.
--Base de datos MySQL instalada localmente con el rol de geerlingguy.mysql
+Este repositorio contiene el código para el despliegue automatizado de Redmine, mostrando su evolución desde un entorno local basado en Vagrant hasta una infraestructura robusta y automatizada en Amazon Web Services (AWS) utilizando una combinación de OpenTofu y Ansible.
 
-Parte 2:
--EC2 en AWS: redmine corre acá
--RDS en AWS: base de datos gestionada (no instalamos MySQL con Ansible)
--Infraestructura creada 100% con OpenTofu (VPC, subredes, EC2, RDS, Sgs)
--Redmine sigue usando nuestro role de common + redmine + asdf + nginx igual que antes.
+<br/>
 
+# ✨ Visión General del Proyecto
 
-Comenzamos creando un directorio Infra/ para opentofu separado de nuestro Ansibe
+El proyecto aborda el desafío de desplegar Redmine de manera eficiente y consistente. Partiendo de una configuración manual con limitaciones, se ha evolucionado hacia una solución completamente automatizada basada en la Infraestructura como Código (IaC).
 
-entrega2/
-├── ansible/    # Copia de nuestro repo actual (pero sin el rol de base local)
-└── infra/      # Archivos tofu
+## Objetivos Clave:
 
-En cuanto la carpeta de ansible (nuestro repo), fue necesario.
-- Eliminar el role geerlingguy.mysql de roles.
-- Eliminar el role geerlingguy.mysql del playbook.
-- Quitar geerlingguy.mysql de requierements.txt.
+- **Automatización Total**: Instalar y configurar Redmine de forma automatizada.
 
-Además, fue necesario modificar una de las dependencias de roles/common/tasks/main.yml.
-Ya que el AMI de aws “ami-0779caf41f9ba54f0” no reconocia la dependencia libmysqlclient-dev, por lo que fue reemplazada por default-libmysqlclient-dev.
-Nota: el usuario de este AMI es admin.
+- **Despliegue en la Nube**: Realizar despliegues consistentes y fiables de Redmine en AWS.
 
-Luego. Cada vez que se levanta la infraestructura, es necesario modificar el inventory/hosts_ec2.ini haciendo referencia a la máquina. También es necesario modificar la variable “mysql_server” de vars.yml, con la dirección de la base de datos RDS.
+<br/>
 
+# 📂 Estructura del Repositorio
 
-En cuanto el directorio infra. Cuenta con lo siguiente:
+Este repositorio contiene el código de ambas partes del proyecto, organizado en dos directorios principales:
 
-infra
-├── main.tf
-├── provider.tf
+- `BETA-redmineAnsible/`: Contiene el código de la parte 1 (despliegue local de Redmine en una VM Vagrant).
 
-Quizá se podría simplificar un poco mas, modularizar..
+- `infra/`: Contiene el código de la parte 2 (despliegue de infraestructura y Redmine en AWS).
 
-Puntos claves del mian.tf.
+<br/>
 
-profile = "496318587878_onboard_IsbUsersPS" → corresponde a mi cuenta aws individual, hay que hacer una grupal..
+# 🚀 Guía Rápida de Despliegue
 
-public_key = file("~/.ssh/id_ed25519.pub") → hace referencia a mi clave pública. Esto debe ser reemplazado según la clave pública de cada uno.
+1. Prepara el entorno virtual
 
+Desde la raíz del proyecto (redmine-aws/) ejecuta:
 
-Login SSH
-ssh -i ~/.ssh/id_ed25519 admin@<IP>
+```bash
+python3 -m venv .venv
+source ./.venv/bin/activate
+pip install boto3 botocore ansible # Instalar Ansible aquí también
+deactivate # Salir del venv para que el script deploy-redmine.sh lo active
+```
 
-En nuestro caso:
-ssh -i ~/.ssh/id_ed25519 admin@54.157.27.106
+<br/>
 
-Aprovisionamiento:
-ansible-playbook -i inventory/hosts_ec2.ini playbook.yml 
+1. Dar Permisos de Ejecución a los Scripts `deploy-redmine.sh` y `destroy.sh`:
+
+```bash
+chmod +x deploy-redmine.sh
+chmod +x destroy.sh
+```
+
+2. Ejecutar el Script `deploy-redmine.sh`:
+
+```bash
+./deploy-redmine.sh
+```
+
+<br/>
+
+# 🔑 Acceso SSH
+
+Conéctate a tu instancia EC2 usando tu clave privada y la IP obtenida:
+
+    ```bash
+    ssh -i ~/.ssh/id_ed25519 admin@<IP_PUBLICA_EC2>
+    ```
+
+<br/>
+
+# 🧹 Limpieza
+
+Para destruir todos los recursos de AWS creados ejecutar el Script `destroy.sh`:
+
+```bash
+./destroy.sh
+```
+
+> Se requerirá confirmación manual, escribe `yes` cuando se te solicite.

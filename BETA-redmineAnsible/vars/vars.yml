@@ -9,16 +9,20 @@ redmine_root: /opt/redmine
 # Base de datos
 mysql_root_password: "rootpass123"
 
-mysql_user: "redmine"
-mysql_password: "redmine123"
-mysql_server: "terraform-20250728215504682800000003.c4j0ew28ezij.us-east-1.rds.amazonaws.com"
+#-------------------------
+#mysql_user: "redmine"
+#mysql_password: "redmine123"
+#mysql_server: "terraform-20250728215504682800000003.c4j0ew28ezij.us-east-1.rds.amazonaws.com"
+#---------------------------
 
 #mysql_server: "localhost"
 
-mysql_databases:
-  - name: redmine
-    encoding: utf8mb4
-    collation: utf8mb4_unicode_ci
+#----------------------------
+# mysql_databases:
+#   - name: redmine
+#     encoding: utf8mb4
+#     collation: utf8mb4_unicode_ci
+#----------------------------
 
 mysql_users:
   - name: redmine

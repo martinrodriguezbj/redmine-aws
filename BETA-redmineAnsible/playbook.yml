@@ -1,8 +1,9 @@
-- hosts: all
+- hosts: redmine
   become: yes
 
   vars_files:
-    - vars.yml
+    - vars/vars.yml
+    - vars/aws_rds_vars.yml
 
   tasks:
     - name: Ejecutar role common

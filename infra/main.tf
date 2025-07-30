@@ -120,12 +120,15 @@ resource "aws_instance" "redmine" {
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   key_name               = aws_key_pair.default.key_name
 
-  tags = { Name = "redmine-ec2" }
+  tags = {
+    Name        = "redmine-ec2"
+    Application = "redmine"
+  }
 }
 
 # --- Subnet Group para RDS ---
 resource "aws_db_subnet_group" "redmine" {
-  name       = "redmine-db-subnet-group"
+  name = "redmine-db-subnet-group"
   subnet_ids = [
     aws_subnet.public_a.id,
     aws_subnet.public_b.id
@@ -158,4 +161,22 @@ output "ec2_public_ip" {
 
 output "rds_endpoint" {
   value = aws_db_instance.redmine.address
+}
+
+# --- Generar archivo de variables para Ansible con el endpoint de RDS ---
+resource "null_resource" "ansible_rds_vars_generator" {
+  # Este recurso se "activa" si el endpoint de RDS cambia
+  triggers = {
+    rds_address = aws_db_instance.redmine.address
+  }
+  provisioner "local-exec" {
+    command     = <<-EOT
+      echo "mysql_server: ${self.triggers.rds_address}" > ../BETA-redmineAnsible/vars/aws_rds_vars.yml
+      # Puedes añadir más variables de DB si las necesitas en este archivo:
+      echo "mysql_user: redmine" >> ../BETA-redmineAnsible/vars/aws_rds_vars.yml
+      echo "mysql_password: redmine123" >> ../BETA-redmineAnsible/vars/aws_rds_vars.yml # ¡CUIDADO CON LA SEGURIDAD!
+      echo "mysql_database: redmine" >> ../BETA-redmineAnsible/vars/aws_rds_vars.yml
+    EOT
+    working_dir = path.module # Asegura que el comando se ejecute desde 'infra/'
+  }
 }

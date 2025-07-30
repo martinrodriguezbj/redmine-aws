@@ -1,1 +1,4 @@
 .terraform/
+.vagrant/
+.ansible
+.venv
