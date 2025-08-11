@@ -14,5 +14,9 @@ Vagrant.configure("2") do |config|
     ansible.galaxy_role_file = "requirements.yml"
     ansible.playbook = "playbook.yml"
     ansible.raw_ssh_args = ["-o ForwardAgent=yes"]
+    # Add this inventory configuration
+    ansible.groups = {
+      "redmine" => ["default"]
+    }
   end
 end
